@@ -1,0 +1,44 @@
+# Push to `sit` → typecheck → test → build → deploy (the server checks /api/lab and rolls back by itself).
+# Repo secrets: DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS, DEPLOY_HOST, DEPLOY_USER.
+name: deploy-sit
+
+on:
+  push:
+    branches: [sit]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-sit
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun test --timeout 20000
+      - run: bun run build
+      # The binary reads data/ next to it (DATA_DIR defaults to ./data), so both go in the archive.
+      - run: |
+          mkdir -p out
+          cp dist/harness-lab-back out/
+          cp -r data out/data
+          tar -czf app.tgz --mode=755 -C out .
+      - name: deploy
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -o StrictHostKeyChecking=yes -o BatchMode=yes "$DEPLOY_USER@$DEPLOY_HOST" harness-lab-back < app.tgz
