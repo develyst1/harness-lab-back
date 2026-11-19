@@ -1,12 +1,13 @@
 # harness-lab-back
 
 Bun + Hono API that serves the Harness Lab data (`data/runs.json`, `data/tiers.json`, `data/meta.json`,
-`data/page.json`) as one JSON document.
+`data/page.json`, `data/techniques.json`) as one JSON document.
 
 ## Routes
 
-- `GET /api/lab` → `{ "runs": [...], "tiers": [...], "meta": {...}, "page": {...} }`, the four data files verbatim,
-  read from disk on every request. `500 { "error": "data_unavailable" }` when any of them is missing or is not valid JSON.
+- `GET /api/lab` → `{ "runs": [...], "tiers": [...], "meta": {...}, "page": {...}, "techniques": [...] }`, the five data
+  files verbatim, read from disk on every request. `500 { "error": "data_unavailable" }` when any of them is missing or is
+  not valid JSON.
 - `GET /api/health` → `{ "ok": true }`
 - `GET /clips/:file` (and `HEAD`) → the `.mp4` from `CLIPS_DIR` (outside git), `206` on `Range`, only when `runs.json`
   names it in `items[].video`; otherwise, or with `CLIPS_DIR` unset, `404 { "error": "not_found" }`.

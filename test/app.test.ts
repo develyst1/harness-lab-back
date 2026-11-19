@@ -30,8 +30,14 @@ async function makeDataDir(name: string, files: Record<string, string>): Promise
   return dir;
 }
 
-// The smallest valid data dir: all four pack files, each valid JSON.
-const MINIMAL: Record<string, string> = { "runs.json": "[]", "tiers.json": "[]", "meta.json": "{}", "page.json": "{}" };
+// The smallest valid data dir: all five pack files, each valid JSON.
+const MINIMAL: Record<string, string> = {
+  "runs.json": "[]",
+  "tiers.json": "[]",
+  "meta.json": "{}",
+  "page.json": "{}",
+  "techniques.json": "[]",
+};
 
 function minimalWithout(file: string): Record<string, string> {
   const files = { ...MINIMAL };
@@ -42,7 +48,7 @@ function minimalWithout(file: string): Record<string, string> {
 const repoText = (file: string) => readFile(join(REPO_DATA, file), "utf8");
 
 describe("GET /api/lab", () => {
-  test("200 body equals the four data files parsed", async () => {
+  test("200 body equals the five data files parsed", async () => {
     const res = await appFor(REPO_DATA).request("/api/lab");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
@@ -50,17 +56,35 @@ describe("GET /api/lab", () => {
       tiers: await readJson(join(REPO_DATA, "tiers.json")),
       meta: await readJson(join(REPO_DATA, "meta.json")),
       page: await readJson(join(REPO_DATA, "page.json")),
+      techniques: await readJson(join(REPO_DATA, "techniques.json")),
     });
   });
 
-  test("body keys are exactly meta, page, runs, tiers", async () => {
+  test("body keys are exactly meta, page, runs, techniques, tiers", async () => {
     const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as Record<string, unknown>;
-    expect(Object.keys(body).sort()).toEqual(["meta", "page", "runs", "tiers"]);
+    expect(Object.keys(body).sort()).toEqual(["meta", "page", "runs", "techniques", "tiers"]);
   });
 
-  test("rows keep pack order R1, R2, R3, R4a, R4b, R5", async () => {
+  test("repo data: 8 rows in pack order R1 … R9", async () => {
     const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { runs: { id: string }[] };
-    expect(body.runs.map((r) => r.id)).toEqual(["R1", "R2", "R3", "R4a", "R4b", "R5"]);
+    expect(body.runs.map((r) => r.id)).toEqual(["R1", "R2", "R3", "R4a", "R4b", "R5", "R6", "R9"]);
+  });
+
+  test("repo data: 15 techniques in pack order T01 … T15", async () => {
+    const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { techniques: { id: string }[] };
+    expect(body.techniques.map((t) => t.id)).toEqual(
+      Array.from({ length: 15 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
+    );
+  });
+
+  test("techniques are served as the file has them: no sort, no reshape, no added field", async () => {
+    const techniques = [
+      { id: "T09", group: "unknown-group", rows: ["R9", "R1"], nested: { a: [1, 2] } },
+      { id: "T01" },
+    ];
+    const dir = await makeDataDir("techniques-as-is", { ...MINIMAL, "techniques.json": JSON.stringify(techniques) });
+    const body = (await (await appFor(dir).request("/api/lab")).json()) as { techniques: unknown };
+    expect(body.techniques).toStrictEqual(techniques);
   });
 
   test("Content-Type is application/json; charset=utf-8 and Cache-Control is no-store", async () => {
@@ -77,6 +101,7 @@ describe("GET /api/lab", () => {
       "tiers.json": await repoText("tiers.json"),
       "meta.json": await repoText("meta.json"),
       "page.json": await repoText("page.json"),
+      "techniques.json": await repoText("techniques.json"),
     });
     const body = (await (await appFor(dir).request("/api/lab")).json()) as { runs: unknown[] };
     expect(body.runs).toHaveLength(runs.length + 1);
@@ -109,7 +134,7 @@ describe("GET /api/lab when data is unavailable", () => {
     expect(String(errorSpy.mock.calls[0]?.[0])).toContain("ENOENT");
   });
 
-  test.each(["tiers.json", "meta.json", "page.json"])(
+  test.each(["tiers.json", "meta.json", "page.json", "techniques.json"])(
     "missing %s only -> 500 data_unavailable, log names it",
     async (file) => {
       const dir = await makeDataDir(`no-${file}`, minimalWithout(file));
@@ -121,14 +146,17 @@ describe("GET /api/lab when data is unavailable", () => {
     },
   );
 
-  test("invalid JSON -> 500 data_unavailable, log names the broken file", async () => {
-    const dir = await makeDataDir("bad-json", { ...MINIMAL, "tiers.json": "[{not json" });
-    const res = await appFor(dir).request("/api/lab");
-    expect(res.status).toBe(500);
-    expect(await res.json()).toEqual({ error: "data_unavailable" });
-    expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(String(errorSpy.mock.calls[0]?.[0])).toContain("tiers.json");
-  });
+  test.each(["tiers.json", "techniques.json"])(
+    "invalid JSON in %s -> 500 data_unavailable, log names the broken file",
+    async (file) => {
+      const dir = await makeDataDir(`bad-json-${file}`, { ...MINIMAL, [file]: "[{not json" });
+      const res = await appFor(dir).request("/api/lab");
+      expect(res.status).toBe(500);
+      expect(await res.json()).toEqual({ error: "data_unavailable" });
+      expect(errorSpy).toHaveBeenCalledTimes(1);
+      expect(String(errorSpy.mock.calls[0]?.[0])).toContain(file);
+    },
+  );
 
   test("invalid UTF-8 -> 500 data_unavailable (not served with replacement characters)", async () => {
     const dir = await makeDataDir("bad-utf8", minimalWithout("runs.json"));
@@ -326,7 +354,13 @@ describe("GET /clips/:file", () => {
   test("/api/lab is unchanged when CLIPS_DIR is set", async () => {
     const res = await fetch(`${base()}/api/lab`);
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ runs: JSON.parse(named("a.mp4", "gone.mp4", "a.txt", ".mp4", "../secret.mp4")), tiers: [], meta: {}, page: {} });
+    expect(await res.json()).toEqual({
+      runs: JSON.parse(named("a.mp4", "gone.mp4", "a.txt", ".mp4", "../secret.mp4")),
+      tiers: [],
+      meta: {},
+      page: {},
+      techniques: [],
+    });
   });
 });
 
