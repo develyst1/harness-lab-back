@@ -70,10 +70,10 @@ describe("GET /api/lab", () => {
     expect(body.runs.map((r) => r.id)).toEqual(["R1", "R2", "R3", "R4a", "R4b", "R5", "R6", "R9"]);
   });
 
-  test("repo data: 15 techniques in pack order T01 … T15", async () => {
+  test("repo data: 16 techniques in pack order T01 … T16", async () => {
     const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { techniques: { id: string }[] };
     expect(body.techniques.map((t) => t.id)).toEqual(
-      Array.from({ length: 15 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
+      Array.from({ length: 16 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
     );
   });
 
