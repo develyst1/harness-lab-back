@@ -1,8 +1,8 @@
 {
  "version": 3,
- "spentUsd": 8.17,
+ "spentUsd": 9.08,
  "capUsd": 10,
- "asOf": "2026-11-19",
+ "asOf": "2026-11-22",
  "usdThb": 33.6,
  "note": "spentUsd = Modio's rent ledger for the month, including vendor adjustments; rows' cost = per-rent pod charges."
 }
