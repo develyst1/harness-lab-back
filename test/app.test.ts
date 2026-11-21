@@ -65,15 +65,15 @@ describe("GET /api/lab", () => {
     expect(Object.keys(body).sort()).toEqual(["meta", "page", "runs", "techniques", "tiers"]);
   });
 
-  test("repo data: 8 rows in pack order R1 … R9", async () => {
+  test("repo data: 9 rows in pack order R1 … R10", async () => {
     const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { runs: { id: string }[] };
-    expect(body.runs.map((r) => r.id)).toEqual(["R1", "R2", "R3", "R4a", "R4b", "R5", "R6", "R9"]);
+    expect(body.runs.map((r) => r.id)).toEqual(["R1", "R2", "R3", "R4a", "R4b", "R5", "R6", "R9", "R10"]);
   });
 
-  test("repo data: 16 techniques in pack order T01 … T16", async () => {
+  test("repo data: 18 techniques in pack order T01 … T18", async () => {
     const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { techniques: { id: string }[] };
     expect(body.techniques.map((t) => t.id)).toEqual(
-      Array.from({ length: 16 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
+      Array.from({ length: 18 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
     );
   });
 

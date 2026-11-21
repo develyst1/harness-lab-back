@@ -258,18 +258,18 @@
   "nameTh": "ระบบคุมเงินค่าเช่า",
   "what": "Prepaid cap, a refuse-to-rent check, a Mac watcher that stops pods at the booked time, try several GPU types and clouds.",
   "model": "ไม่ขึ้นกับโมเดล",
-  "metric": "spend vs cap over 9 rents",
+  "metric": "spend vs cap over 10 rents",
   "before": "-",
-  "after": "$7.12 + rent 9 of a $10 monthly cap; no pod ever ran unattended",
+  "after": "$9.08 of a $10 monthly cap after 10 rents; no pod ever ran unattended",
   "gain": "experiments stay cheap",
   "evidence": "Modio's run log",
-  "date": "2026-11-19",
+  "date": "2026-11-22",
   "rows": [],
   "evidenceTh": "บัญชีค่าเช่าทุกรอบ",
   "whatTh": "เติมเงินล่วงหน้าไม่เกินเพดาน ตัวคุมไม่ยอมเช่าถ้าเสี่ยงเกิน ตัวเฝ้าบน Mac ปิดเครื่องตอนครบเวลา และลองหลายรุ่นการ์ดหลายคลาวด์",
-  "metricTh": "ค่าใช้จ่ายเทียบกับเพดาน ตลอด 9 รอบเช่า",
+  "metricTh": "ค่าใช้จ่ายเทียบกับเพดาน ตลอด 10 รอบเช่า",
   "beforeTh": "-",
-  "afterTh": "$8.17 จากเพดาน $10 ต่อเดือน ไม่เคยมีเครื่องเปิดค้างโดยไม่มีคนดู",
+  "afterTh": "$9.08 จากเพดาน $10 ต่อเดือน ไม่เคยมีเครื่องเปิดค้างโดยไม่มีคนดู",
   "gainTh": "ทดลองได้ถูก"
  },
  {
@@ -360,5 +360,52 @@
   "beforeTh": "Colibrì กับ DeepSeek: ยังไม่มีตัวรันที่สร้างไว้ (เอกสารของเขาเองบอกราว 1.5 คำ/วินาที) · กับ Flash-Next: ส่วนที่รันบนการ์ดยังไม่รองรับไฟล์แบบที่เราใช้ เลยไปรันบน CPU รอ 11 นาทียังไม่ตอบ",
   "afterTh": "llama.cpp บนไฟล์ Flash-Next เดียวกัน: 48–58 คำ/วินาที",
   "gainTh": "เก็บไอเดียไว้ ทิ้งเครื่องมือ ไม่เสียเงินแปลงไฟล์โมเดลให้เครื่องมือที่เครื่องเช่าของเราใช้ไม่ได้"
+ },
+ {
+  "id": "T17",
+  "group": "harness",
+  "name": "Our own harness: OpenCode + Modio tools (identity and tools chosen per role)",
+  "nameTh": "harness ของเราเอง: OpenCode + เครื่องมือที่เราเขียนเอง",
+  "what": "OpenCode with a custom agent (\"Modio GPT\") and five tools Modio wrote (read, write, edit, delete, run), short or long manuals, a command allowlist and folder confinement.",
+  "model": "Qwen 3.8 27B Q8",
+  "metric": "tokens sent before any work; identity editable; exam result",
+  "before": "Claude Code --bare: ~944 tokens, identity locked (\"You are a Claude agent\"), 3 tools, no write tool",
+  "after": "~571 (short) / ~831 (long) tokens, identity ours, tools per role; real exam item passed 4/4",
+  "gain": "the harness is ours end to end, and lighter than Claude Code",
+  "evidence": "rent 10 + Mac captures",
+  "date": "2026-11-22",
+  "rows": [
+   "R10"
+  ],
+  "evidenceTh": "ดักข้อความที่ส่งให้โมเดลบน Mac แล้วทำข้อสอบจริงในรอบเช่าที่ 10",
+  "whatTh": "ใช้ OpenCode เป็นมือแทน Claude Code ตั้งชื่อผู้ช่วยเองว่า Modio GPT และใช้เครื่องมือ 5 ชิ้นที่เราเขียนเอง (อ่าน เขียน แก้ ลบ รันคำสั่ง) มีคู่มือแบบสั้นและแบบยาว รันคำสั่งได้เฉพาะที่อนุญาต และแตะไฟล์ได้แค่ในโฟลเดอร์งาน",
+  "metricTh": "ข้อความที่ส่งให้โมเดลก่อนเริ่มงาน, แก้คำแนะนำตัวได้ไหม, ผลข้อสอบจริง",
+  "beforeTh": "Claude Code แบบบาง: ~944 คำ, คำแนะนำตัว \"You are a Claude agent\" ลบไม่ได้, เครื่องมือ 3 ชิ้น ไม่มีเครื่องมือเขียนไฟล์",
+  "afterTh": "~571 คำ (คู่มือสั้น) / ~831 คำ (คู่มือยาว), คำแนะนำตัวเป็นของเรา, เลือกเครื่องมือตามงาน, ข้อสอบจริงผ่าน จับได้ 4/4",
+  "gainTh": "มือของ AI เป็นของเราทั้งหมด และเบากว่า Claude Code"
+ },
+ {
+  "id": "T18",
+  "group": "harness",
+  "name": "Card v3: leave the tree clean before reporting",
+  "nameTh": "การ์ดฉบับ 3: เก็บโต๊ะก่อนส่งงาน",
+  "what": "One card section: delete every scratch file the TASK does not ask for, then list the files you created.",
+  "model": "Qwen 3.8 27B Q8",
+  "metric": "stray files left in the repo per item",
+  "before": "1 per item (rent 9, both items)",
+  "after": "0 (rent 10)",
+  "gain": "closes the last Mid gap seen in rent 9 (one item so far)",
+  "evidence": "rent 9 vs rent 10",
+  "date": "2026-11-22",
+  "rows": [
+   "R9",
+   "R10"
+  ],
+  "evidenceTh": "เทียบรอบเช่าที่ 9 กับรอบเช่าที่ 10 บนข้อยากข้อเดียวกัน",
+  "whatTh": "เพิ่มหมวดในการ์ด: ก่อนส่งงานให้ลบไฟล์ทดลองที่ TASK ไม่ได้สั่ง แล้วไล่ดูไฟล์ที่สร้างว่ามีแต่ที่ควรมี",
+  "metricTh": "ไฟล์ขยะที่เหลือใน repo ต่อข้อ",
+  "beforeTh": "ข้อละ 1 ไฟล์ (รอบ 9 ทั้งสองข้อ)",
+  "afterTh": "0 (รอบ 10)",
+  "gainTh": "ปิดจุดที่ยังไม่ถึง Mid ที่เห็นในรอบ 9 (ลองแล้ว 1 ข้อ)"
  }
 ]
