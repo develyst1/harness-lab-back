@@ -48,7 +48,7 @@ function minimalWithout(file: string): Record<string, string> {
 const repoText = (file: string) => readFile(join(REPO_DATA, file), "utf8");
 
 describe("GET /api/lab", () => {
-  test("200 body equals the five data files parsed", async () => {
+  test("200 body equals the six data files parsed (meeting as stored: it holds no product/source)", async () => {
     const res = await appFor(REPO_DATA).request("/api/lab");
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
@@ -57,12 +57,13 @@ describe("GET /api/lab", () => {
       meta: await readJson(join(REPO_DATA, "meta.json")),
       page: await readJson(join(REPO_DATA, "page.json")),
       techniques: await readJson(join(REPO_DATA, "techniques.json")),
+      meeting: await readJson(join(REPO_DATA, "meeting.json")),
     });
   });
 
-  test("body keys are exactly meta, page, runs, techniques, tiers", async () => {
+  test("body keys are exactly meeting, meta, page, runs, techniques, tiers", async () => {
     const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as Record<string, unknown>;
-    expect(Object.keys(body).sort()).toEqual(["meta", "page", "runs", "techniques", "tiers"]);
+    expect(Object.keys(body).sort()).toEqual(["meeting", "meta", "page", "runs", "techniques", "tiers"]);
   });
 
   test("repo data: 9 rows in pack order R1 … R10", async () => {
@@ -70,11 +71,37 @@ describe("GET /api/lab", () => {
     expect(body.runs.map((r) => r.id)).toEqual(["R1", "R2", "R3", "R4a", "R4b", "R5", "R6", "R9", "R10"]);
   });
 
-  test("repo data: 18 techniques in pack order T01 … T18", async () => {
-    const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { techniques: { id: string }[] };
+  test("repo data: 20 techniques in pack order T01 … T20 (T19, T20 with no rows yet)", async () => {
+    const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { techniques: { id: string; rows: unknown[] }[] };
     expect(body.techniques.map((t) => t.id)).toEqual(
-      Array.from({ length: 18 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
+      Array.from({ length: 20 }, (_, i) => `T${String(i + 1).padStart(2, "0")}`),
     );
+    expect(body.techniques.slice(18).map((t) => t.rows)).toEqual([[], []]);
+  });
+
+  // SPEC-011 Contract 1 and 2 (TASK-039).
+  test("repo data: meeting is served, an object with no product and no source", async () => {
+    const body = (await (await appFor(REPO_DATA).request("/api/lab")).json()) as { meeting: Record<string, unknown> | null };
+    expect(body.meeting).not.toBeNull();
+    expect(typeof body.meeting).toBe("object");
+    expect(Object.keys(body.meeting!)).not.toContain("product");
+    expect(Object.keys(body.meeting!)).not.toContain("source");
+    expect(typeof body.meeting!.titleTh).toBe("string");
+  });
+
+  test("a data dir without meeting.json -> 200 with meeting: null; the other five as before", async () => {
+    const dir = await makeDataDir("no-meeting", MINIMAL);
+    const res = await appFor(dir).request("/api/lab");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ runs: [], tiers: [], meta: {}, page: {}, techniques: [], meeting: null });
+  });
+
+  test("a meeting.json that holds product and source -> served without them, every other key as the file has it", async () => {
+    const meeting = { id: "M1", product: "secret-app", titleTh: "ชื่อไทย", nested: { a: [1, 2] }, source: "llm-rent/x", next: ["n"] };
+    const dir = await makeDataDir("meeting-with-product", { ...MINIMAL, "meeting.json": JSON.stringify(meeting) });
+    const body = (await (await appFor(dir).request("/api/lab")).json()) as { meeting: Record<string, unknown> };
+    expect(body.meeting).toStrictEqual({ id: "M1", titleTh: "ชื่อไทย", nested: { a: [1, 2] }, next: ["n"] });
+    expect(Object.keys(body.meeting)).toEqual(["id", "titleTh", "nested", "next"]);
   });
 
   test("techniques are served as the file has them: no sort, no reshape, no added field", async () => {
@@ -157,6 +184,22 @@ describe("GET /api/lab when data is unavailable", () => {
       expect(String(errorSpy.mock.calls[0]?.[0])).toContain(file);
     },
   );
+
+  test("an invalid meeting.json -> 500 data_unavailable, the log names it", async () => {
+    const dir = await makeDataDir("bad-meeting", { ...MINIMAL, "meeting.json": "{not json" });
+    const res = await appFor(dir).request("/api/lab");
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "data_unavailable" });
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain("meeting.json");
+  });
+
+  test("a meeting.json that cannot be read for another reason than missing (a folder) -> 500, not null", async () => {
+    const dir = await makeDataDir("meeting-is-a-dir", MINIMAL);
+    await mkdir(join(dir, "meeting.json"));
+    const res = await appFor(dir).request("/api/lab");
+    expect(res.status).toBe(500);
+    expect(String(errorSpy.mock.calls[0]?.[0])).toContain("meeting.json");
+  });
 
   test("invalid UTF-8 -> 500 data_unavailable (not served with replacement characters)", async () => {
     const dir = await makeDataDir("bad-utf8", minimalWithout("runs.json"));
@@ -360,6 +403,7 @@ describe("GET /clips/:file", () => {
       meta: {},
       page: {},
       techniques: [],
+      meeting: null, // this data dir has no meeting.json (SPEC-011 Contract 2)
     });
   });
 });
