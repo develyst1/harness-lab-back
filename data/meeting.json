@@ -1,0 +1,332 @@
+{
+  "id": "R-M1",
+  "date": "2026-11-23",
+  "title": "Meeting minutes: 100% local vs local + talent",
+  "titleTh": "ผู้ช่วยจดประชุม: ในเครื่องล้วน เทียบกับ ในเครื่อง + สมองเสริม (talent)",
+  "question": "On the minutes step, how many of a meeting's action items does each way of working find, how often does it finish, and for how much time and money?",
+  "questionTh": "ขั้นสรุปประชุม แต่ละแบบจดงานที่ต้องทำต่อได้กี่ข้อ จดจบบ่อยแค่ไหน ใช้เวลาและเงินเท่าไร",
+  "how": "4 synthetic Thai meetings with answer keys (fictional people). ASR once per meeting on the Mac (pathumma-q8), then every arm reads the same text with the product's own prompts and guard. Talent arms 3 tries, local 1–2 (temperature 0). A small judge model (Claude Haiku 5.5) decides only whether an item is the same task as a key action; who and when are checked by rule. Checked by hand on 3 runs.",
+  "howTh": "ประชุมภาษาไทยสังเคราะห์ 4 ไฟล์ มีเฉลย (ตัวละครสมมติ) ถอดเสียงในเครื่องครั้งเดียว แล้วทุกแบบอ่านข้อความเดียวกัน ด้วยคำสั่งและตัวกันเดาของแอปจริง แบบที่ใช้ talent ลองแบบละ 3 ครั้ง ในเครื่อง 1–2 ครั้ง ใช้โมเดลเล็ก (Claude Haiku 5.5) เป็นกรรมการตัดสินแค่ว่างานที่จดได้ตรงกับข้อไหนในเฉลย ส่วนชื่อคนกับวันส่งตรวจด้วยกฎ และผมสุ่มตรวจด้วยตา 3 รอบ",
+  "costUsd": 5.48,
+  "capUsd": 6,
+  "cutWasteUsd": 2.42,
+  "costNoteTh": "เป็นเงินค่า talent แยกจากค่าเช่าเครื่อง ($5.48 จากเพดานงานนี้ $6) ในนี้ $2.42 เป็นคำตอบที่ถูกตัดกลางทางแต่ยังโดนคิดเงิน",
+  "fixtures": [
+    {
+      "id": "mm-short",
+      "minutes": 4.1,
+      "actions": 5,
+      "asrSec": 42
+    },
+    {
+      "id": "mm-gaps",
+      "minutes": 3.8,
+      "actions": 7,
+      "asrSec": 38
+    },
+    {
+      "id": "mm-noisy",
+      "minutes": 10.3,
+      "actions": 14,
+      "asrSec": 103
+    },
+    {
+      "id": "mm-long",
+      "minutes": 56.4,
+      "actions": 42,
+      "asrSec": 612
+    }
+  ],
+  "arms": [
+    {
+      "id": "L",
+      "label": "local Qwen3 14B",
+      "labelTh": "ในเครื่องล้วน (Qwen3 14B)",
+      "kind": "local",
+      "found": {
+        "mm-short": 2,
+        "mm-gaps": 4,
+        "mm-noisy": 7,
+        "mm-long": null
+      },
+      "cut": {
+        "mm-long": "first call cut at 3,000 tokens after 1,101 s"
+      },
+      "done": [
+        4,
+        5
+      ],
+      "secShort": 143,
+      "usdPerMeeting": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "H-flash",
+      "label": "local + deepseek-flash check",
+      "labelTh": "ในเครื่อง + deepseek-flash ตรวจ",
+      "kind": "hybrid",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 5,
+        "mm-noisy": 12,
+        "mm-long": null
+      },
+      "done": [
+        3,
+        3
+      ],
+      "secShort": 233,
+      "usdPerMeeting": [
+        0.003,
+        0.023
+      ]
+    },
+    {
+      "id": "H-pro",
+      "label": "local + deepseek-v4-pro check",
+      "labelTh": "ในเครื่อง + deepseek-v4-pro ตรวจ",
+      "kind": "hybrid",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 7,
+        "mm-noisy": null,
+        "mm-long": null
+      },
+      "done": [
+        2,
+        3
+      ],
+      "secShort": 431,
+      "usdPerMeeting": [
+        0.07,
+        0.1
+      ]
+    },
+    {
+      "id": "H-opus",
+      "label": "local + Claude Opus 5.5 check",
+      "labelTh": "ในเครื่อง + Claude Opus 5.5 ตรวจ",
+      "kind": "hybrid",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 7,
+        "mm-noisy": null,
+        "mm-long": null
+      },
+      "done": [
+        2,
+        3
+      ],
+      "secShort": 212,
+      "usdPerMeeting": [
+        0.07,
+        0.35
+      ]
+    },
+    {
+      "id": "T-flash",
+      "label": "deepseek-flash alone",
+      "labelTh": "deepseek-flash ล้วน",
+      "kind": "talent",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 5,
+        "mm-noisy": 13,
+        "mm-long": 38
+      },
+      "done": [
+        12,
+        12
+      ],
+      "secShort": 13,
+      "secLong": 88,
+      "usdPerMeeting": [
+        0.005,
+        0.022
+      ]
+    },
+    {
+      "id": "T-pro",
+      "label": "deepseek-v4-pro alone",
+      "labelTh": "deepseek-v4-pro ล้วน",
+      "kind": "talent",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 5,
+        "mm-noisy": 13,
+        "mm-long": 33
+      },
+      "done": [
+        10,
+        11
+      ],
+      "secShort": 134,
+      "secLong": 288,
+      "usdPerMeeting": [
+        0.04,
+        0.1
+      ]
+    },
+    {
+      "id": "T-haiku",
+      "label": "Claude Haiku 5.5 alone",
+      "labelTh": "Claude Haiku 5.5 ล้วน",
+      "kind": "talent",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 7,
+        "mm-noisy": null,
+        "mm-long": null
+      },
+      "done": [
+        6,
+        12
+      ],
+      "secShort": 49,
+      "usdPerMeeting": [
+        0.005,
+        0.007
+      ]
+    },
+    {
+      "id": "T-sonnet",
+      "label": "Claude Sonnet 5.5 alone",
+      "labelTh": "Claude Sonnet 5.5 ล้วน",
+      "kind": "talent",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 7,
+        "mm-noisy": 14,
+        "mm-long": null
+      },
+      "done": [
+        7,
+        10
+      ],
+      "secShort": 44,
+      "usdPerMeeting": [
+        0.05,
+        0.16
+      ]
+    },
+    {
+      "id": "T-opus",
+      "label": "Claude Opus 5.5 alone",
+      "labelTh": "Claude Opus 5.5 ล้วน",
+      "kind": "talent",
+      "found": {
+        "mm-short": 5,
+        "mm-gaps": 7,
+        "mm-noisy": 14,
+        "mm-long": null
+      },
+      "done": [
+        8,
+        12
+      ],
+      "secShort": 54,
+      "usdPerMeeting": [
+        0.09,
+        0.31
+      ]
+    }
+  ],
+  "foundNote": "found = median over the tries that finished. null = no try finished (cut) or not run.",
+  "foundNoteTh": "จดได้ = ค่ากลางของรอบที่จดจบ ช่องว่าง = ไม่มีรอบไหนจดจบ (ถูกตัด) หรือยังไม่ได้รัน ห้ามแสดงเป็น 0",
+  "cutRates": [
+    {
+      "model": "claude-haiku-5-5",
+      "cut": 7,
+      "calls": 13
+    },
+    {
+      "model": "claude-opus-5-5",
+      "cut": 4,
+      "calls": 14
+    },
+    {
+      "model": "claude-sonnet-5-5",
+      "cut": 3,
+      "calls": 10
+    },
+    {
+      "model": "deepseek-v4-pro",
+      "cut": 3,
+      "calls": 18
+    },
+    {
+      "model": "deepseek-flash",
+      "cut": 0,
+      "calls": 15
+    }
+  ],
+  "earsVsBrain": {
+    "local": {
+      "asr": [
+        2,
+        4,
+        7
+      ],
+      "gold": [
+        2,
+        5,
+        8
+      ]
+    },
+    "fixtures": [
+      "mm-short",
+      "mm-gaps",
+      "mm-noisy"
+    ]
+  },
+  "findings": [
+    {
+      "en": "Local alone finds about half of the action items and cannot finish a 56-min meeting: its first call runs out of its 3,000 tokens.",
+      "th": "ในเครื่องล้วนจดงานได้ราวครึ่งเดียว และจดประชุม 56 นาทีไม่จบ เพราะคำสั่งแรกยาวเกิน 3,000 token"
+    },
+    {
+      "en": "A small talent touch closes most of the gap: local + deepseek-flash went 2→5, 4→5, 7→12 for one or two cents.",
+      "th": "ให้สมองเสริมตรวจนิดเดียวก็ปิดช่องว่างได้เกือบหมด: ในเครื่อง + deepseek-flash ขยับ 2→5, 4→5, 7→12 ข้อ จ่าย 1–2 เซนต์"
+    },
+    {
+      "en": "The risk of talent mode is a cut answer, not quality: every Claude model was cut on the 56-min meeting, and a cut is billed ($2.42 of $5.48).",
+      "th": "ความเสี่ยงของโหมด talent คือคำตอบถูกตัดกลางทาง ไม่ใช่คุณภาพ: Claude ทุกรุ่นถูกตัดบนประชุม 56 นาที และคำตอบที่ถูกตัดก็ยังเสียเงิน ($2.42 จาก $5.48)"
+    },
+    {
+      "en": "deepseek-flash finished 15 of 15 calls, was the fastest and the cheapest: 38 of 42 on the 56-min meeting in 88 s for about 2 cents.",
+      "th": "deepseek-flash จดจบ 15 จาก 15 ครั้ง เร็วที่สุดและถูกที่สุด: ประชุม 56 นาทีจดได้ 38 จาก 42 ข้อ ใน 88 วินาที ราว 2 เซนต์"
+    },
+    {
+      "en": "The loss is in the brain, not the ears: on the gold script local found 2, 5 and 8, against 2, 4 and 7 on ASR text.",
+      "th": "งานหลุดที่สมอง ไม่ใช่ที่หู: ให้ในเครื่องอ่านบทต้นฉบับได้ 2, 5, 8 ข้อ เทียบกับ 2, 4, 7 ข้อ เมื่ออ่านจากเสียงที่ถอดแล้ว"
+    },
+    {
+      "en": "The no-guess guard removed right owners too (a line with 'I' blanks the owner), and after it no arm guessed an owner.",
+      "th": "ตัวกันเดาลบชื่อคนรับงานที่ถูกทิ้งไปด้วย (บรรทัดที่มีคำว่า ดิฉัน/ผม) แต่หลังผ่านตัวกันเดา ไม่มีแบบไหนเดาชื่อคนผิดเลย"
+    }
+  ],
+  "next": [
+    {
+      "th": "ให้คำสั่งแรกของในเครื่องไม่ขอรายการงาน แล้ววัดว่าจดประชุม 56 นาทีจบไหม ใช้เวลาเท่าไร",
+      "usd": 0
+    },
+    {
+      "th": "ในเครื่อง + deepseek-flash ตรวจ บนประชุม 56 นาที",
+      "usd": 0.1
+    },
+    {
+      "th": "deepseek-flash แบบแบ่งเป็นช่วง บนประชุม 56 นาที",
+      "usd": 0.05
+    },
+    {
+      "th": "Claude ที่ยอมให้ตอบยาวขึ้น หรือคิดน้อยลง เพื่อรู้ว่าถูกตัดเพราะคิดหรือเพราะคำตอบยาว",
+      "usd": 1
+    },
+    {
+      "th": "ตัวกันเดาแบบนุ่มลง แล้ววัดชื่อคนรับงานก่อนและหลัง",
+      "usd": 0
+    }
+  ]
+}
